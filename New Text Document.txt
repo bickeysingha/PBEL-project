@@ -1,0 +1,88 @@
+echo "# PBEL-project" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/bickeysingha/PBEL-project.git
+git push -u origin main
+
+
+
+
+backend/
+│
+├── config/
+│   └── db.js
+│
+├── controllers/
+│   ├── authController.js
+│   ├── transactionController.js
+│   ├── budgetController.js       ← YOUR PART
+│   ├── dashboardController.js    ← YOUR PART
+│   └── reportController.js       ← YOUR PART
+│
+├── middleware/
+│   └── authMiddleware.js
+│
+├── models/
+│   ├── User.js
+│   ├── Transaction.js
+│   ├── Category.js
+│   └── Budget.js                 ← YOUR PART
+│
+├── routes/
+│   ├── authRoutes.js
+│   ├── transactionRoutes.js
+│   ├── budgetRoutes.js           ← YOUR PART
+│   ├── dashboardRoutes.js        ← YOUR PART
+│   └── reportRoutes.js           ← YOUR PART
+│
+├── .env
+├── server.js
+└── package.json
+
+
+
+
+frontend/
+│
+└── src/
+    ├── components/
+    │   ├── Sidebar.jsx
+    │   ├── StatCard.jsx
+    │   ├── BudgetCard.jsx
+    │   └── Charts.jsx
+    │
+    ├── pages/
+    │   ├── Dashboard.jsx      ← YOUR PART
+    │   ├── Budgets.jsx        ← YOUR PART
+    │   └── Reports.jsx        ← YOUR PART
+    │
+    ├── services/
+    │   ├── budgetService.js
+    │   ├── dashboardService.js
+    │   └── reportService.js
+    │
+    └── App.jsx
+
+
+report of the thing we install and use:-
+
+frontend->
+npm create vite@latest frontend
+ here we selected the framework(react) , variant(javascript) , and the linter(Eslint)
+npm instal
+npm install react-router-dom axios recharts
+
+backend->
+
+npm init -y
+npm install express mongoose dotenv cors
+npm install -D nodemon
+
+
+/// id of postman
+
+"6a8efed55aa7a946ab5d600b"   budget
+"6a8efd225aa7a946ab5d6009"  user
+"6a8efd435aa7a946ab5d600a"   Category
