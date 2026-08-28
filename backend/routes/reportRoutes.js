@@ -1,9 +1,10 @@
 const express = require("express");
 const { getReports } = require("../controllers/reportController");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// GET /api/reports
-router.get("/", getReports);
+// Reports require login
+router.get("/", authMiddleware, getReports);
 
 module.exports = router;

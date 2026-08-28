@@ -8,8 +8,12 @@ import {
   deleteBudget,
 } from "../services/budgetService";
 
+import { getCategories } from "../services/categoryService";
+
 function Budgets() {
   const [budgets, setBudgets] = useState([]);
+  const [categories, setCategories] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -22,6 +26,7 @@ function Budgets() {
 
   const [editingId, setEditingId] = useState(null);
 
+  // Fetch budgets
   const fetchBudgets = async () => {
     try {
       const data = await getBudgets();
@@ -40,10 +45,40 @@ function Budgets() {
     }
   };
 
+  // Fetch categories
+const fetchCategories = async () => {
+  try {
+    const data = await getCategories();
+
+    console.log("Categories data:", data);
+
+    // Handle different backend response formats
+    if (Array.isArray(data)) {
+      setCategories(data);
+    } else if (Array.isArray(data.categories)) {
+      setCategories(data.categories);
+    } else {
+      setCategories([]);
+      console.error("Categories is not an array:", data);
+    }
+  } catch (error) {
+    console.error(
+      "Error fetching categories:",
+      error.response?.data || error.message
+    );
+
+    setCategories([]);
+    setMessage(
+      error.response?.data?.message || "Failed to fetch categories"
+    );
+  }
+};
   useEffect(() => {
     fetchBudgets();
+    fetchCategories();
   }, []);
 
+  // Handle form input
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -51,6 +86,7 @@ function Budgets() {
     });
   };
 
+  // Reset form
   const resetForm = () => {
     setFormData({
       category: "",
@@ -60,11 +96,12 @@ function Budgets() {
     });
 
     setEditingId(null);
-    setMessage("");
   };
 
+  // Add or update budget
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setMessage("");
 
     try {
@@ -97,6 +134,7 @@ function Budgets() {
     }
   };
 
+  // Edit budget
   const handleEdit = (budget) => {
     setFormData({
       category: budget.category?._id || budget.category || "",
@@ -113,6 +151,7 @@ function Budgets() {
     });
   };
 
+  // Delete budget
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this budget?"
@@ -122,7 +161,9 @@ function Budgets() {
 
     try {
       await deleteBudget(id);
+
       setMessage("Budget deleted successfully!");
+
       await fetchBudgets();
     } catch (error) {
       console.error(
@@ -149,15 +190,23 @@ function Budgets() {
           {message && <p>{message}</p>}
 
           <form onSubmit={handleSubmit}>
-            <input
-              type="text"
+            {/* CATEGORY DROPDOWN */}
+            <select
               name="category"
-              placeholder="Category ID"
               value={formData.category}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="">Select Category</option>
 
+              {categories.map((category) => (
+                <option key={category._id} value={category._id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+
+            {/* AMOUNT */}
             <input
               type="number"
               name="amount"
@@ -168,22 +217,34 @@ function Budgets() {
               required
             />
 
-            <input
-              type="number"
+            {/* MONTH */}
+            <select
               name="month"
-              placeholder="Month (1-12)"
-              min="1"
-              max="12"
               value={formData.month}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="">Select Month</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
 
+            {/* YEAR */}
             <input
               type="number"
               name="year"
               placeholder="Year"
-              min="2000"
+              min="2020"
               value={formData.year}
               onChange={handleChange}
               required
@@ -216,7 +277,7 @@ function Budgets() {
             {budgets.map((budget) => (
               <div className="budget-card" key={budget._id}>
                 <h3>
-                  {budget.category?.name || "Budget"}
+                  {budget.category?.name || "Unknown Category"}
                 </h3>
 
                 <p>
@@ -224,7 +285,11 @@ function Budgets() {
                 </p>
 
                 <p>
-                  <strong>Period:</strong> {budget.month}/{budget.year}
+                  <strong>Month:</strong> {budget.month}
+                </p>
+
+                <p>
+                  <strong>Year:</strong> {budget.year}
                 </p>
 
                 <div className="budget-actions">

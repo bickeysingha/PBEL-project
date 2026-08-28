@@ -1,13 +1,16 @@
 const Transaction = require("../models/Transaction");
 
-// @desc    Get reports data
-// @route   GET /api/reports
+// @desc Get reports data
+// @route GET /api/reports
 const getReports = async (req, res) => {
   try {
-    // Category-wise expenses
+    const userId = req.user.id;
+
+    // Category-wise expenses for logged-in user
     const categoryWiseExpenses = await Transaction.aggregate([
       {
         $match: {
+          user: userId,
           type: "expense",
         },
       },
@@ -19,8 +22,13 @@ const getReports = async (req, res) => {
       },
     ]);
 
-    // Monthly income and expenses
+    // Monthly income and expenses for logged-in user
     const monthlySummary = await Transaction.aggregate([
+      {
+        $match: {
+          user: userId,
+        },
+      },
       {
         $group: {
           _id: {
@@ -39,10 +47,11 @@ const getReports = async (req, res) => {
       },
     ]);
 
-    // Monthly expense trend
+    // Monthly expense trend for logged-in user
     const spendingTrend = await Transaction.aggregate([
       {
         $match: {
+          user: userId,
           type: "expense",
         },
       },

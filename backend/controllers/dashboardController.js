@@ -1,10 +1,13 @@
 const Transaction = require("../models/Transaction");
 
-// @desc    Get dashboard statistics
-// @route   GET /api/dashboard
+// @desc Get dashboard statistics
+// @route GET /api/dashboard
 const getDashboard = async (req, res) => {
   try {
-    const transactions = await Transaction.find();
+    // Only get transactions belonging to the logged-in user
+    const transactions = await Transaction.find({
+      user: req.user.id,
+    });
 
     let totalIncome = 0;
     let totalExpense = 0;
@@ -19,9 +22,13 @@ const getDashboard = async (req, res) => {
 
     const balance = totalIncome - totalExpense;
 
-    const recentTransactions = await Transaction.find()
+    // Get only this user's recent transactions
+    const recentTransactions = await Transaction.find({
+      user: req.user.id,
+    })
       .sort({ date: -1 })
-      .limit(5);
+      .limit(5)
+      .populate("category", "name");
 
     res.status(200).json({
       totalIncome,
