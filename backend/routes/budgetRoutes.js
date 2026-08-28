@@ -7,7 +7,12 @@ const {
   deleteBudget,
 } = require("../controllers/budgetController");
 
+const authMiddleware = require("../middleware/authMiddleware");
+
 const router = express.Router();
+
+// All budget routes require login
+router.use(authMiddleware);
 
 router
   .route("/")

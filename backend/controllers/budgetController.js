@@ -1,10 +1,11 @@
 const Budget = require("../models/Budget");
 
-// @desc    Get all budgets
-// @route   GET /api/budgets
+// GET /api/budgets
 const getBudgets = async (req, res) => {
   try {
-    const budgets = await Budget.find();
+    const budgets = await Budget.find({
+      user: req.user.id,
+    }).populate("category", "name");
 
     res.status(200).json(budgets);
   } catch (error) {
@@ -15,21 +16,20 @@ const getBudgets = async (req, res) => {
   }
 };
 
-// @desc    Create a budget
-// @route   POST /api/budgets
+
+// POST /api/budgets
 const createBudget = async (req, res) => {
   try {
-    const { user, category, amount, month, year } = req.body;
+    const { category, amount, month, year } = req.body;
 
-    // Basic validation
-    if (!user || !category || !amount || !month || !year) {
+    if (!category || !amount || !month || !year) {
       return res.status(400).json({
-        message: "All fields are required",
+        message: "Category, amount, month and year are required",
       });
     }
 
     const budget = await Budget.create({
-      user,
+      user: req.user.id,
       category,
       amount,
       month,
@@ -45,18 +45,21 @@ const createBudget = async (req, res) => {
   }
 };
 
-// @desc    Update a budget
-// @route   PUT /api/budgets/:id
+
+// PUT /api/budgets/:id
 const updateBudget = async (req, res) => {
   try {
-    const budget = await Budget.findByIdAndUpdate(
-      req.params.id,
+    const budget = await Budget.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        user: req.user.id,
+      },
       req.body,
       {
         new: true,
         runValidators: true,
       }
-    );
+    ).populate("category", "name");
 
     if (!budget) {
       return res.status(404).json({
@@ -73,11 +76,14 @@ const updateBudget = async (req, res) => {
   }
 };
 
-// @desc    Delete a budget
-// @route   DELETE /api/budgets/:id
+
+// DELETE /api/budgets/:id
 const deleteBudget = async (req, res) => {
   try {
-    const budget = await Budget.findByIdAndDelete(req.params.id);
+    const budget = await Budget.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user.id,
+    });
 
     if (!budget) {
       return res.status(404).json({

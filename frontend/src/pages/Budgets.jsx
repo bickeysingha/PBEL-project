@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
+
 import {
   getBudgets,
   createBudget,
@@ -10,9 +11,9 @@ import {
 function Budgets() {
   const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
 
   const [formData, setFormData] = useState({
-    user: "",
     category: "",
     amount: "",
     month: "",
@@ -26,7 +27,14 @@ function Budgets() {
       const data = await getBudgets();
       setBudgets(data);
     } catch (error) {
-      console.error("Error fetching budgets:", error);
+      console.error(
+        "Error fetching budgets:",
+        error.response?.data || error.message
+      );
+
+      setMessage(
+        error.response?.data?.message || "Failed to fetch budgets"
+      );
     } finally {
       setLoading(false);
     }
@@ -45,7 +53,6 @@ function Budgets() {
 
   const resetForm = () => {
     setFormData({
-      user: "",
       category: "",
       amount: "",
       month: "",
@@ -53,14 +60,16 @@ function Budgets() {
     });
 
     setEditingId(null);
+    setMessage("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
 
     try {
       const budgetData = {
-        ...formData,
+        category: formData.category,
         amount: Number(formData.amount),
         month: Number(formData.month),
         year: Number(formData.year),
@@ -68,21 +77,29 @@ function Budgets() {
 
       if (editingId) {
         await updateBudget(editingId, budgetData);
+        setMessage("Budget updated successfully!");
       } else {
         await createBudget(budgetData);
+        setMessage("Budget added successfully!");
       }
 
       resetForm();
       await fetchBudgets();
     } catch (error) {
-      console.error("Error saving budget:", error);
+      console.error(
+        "Error saving budget:",
+        error.response?.data || error.message
+      );
+
+      setMessage(
+        error.response?.data?.message || "Failed to save budget"
+      );
     }
   };
 
   const handleEdit = (budget) => {
     setFormData({
-      user: budget.user,
-      category: budget.category,
+      category: budget.category?._id || budget.category || "",
       amount: budget.amount,
       month: budget.month,
       year: budget.year,
@@ -105,12 +122,17 @@ function Budgets() {
 
     try {
       await deleteBudget(id);
+      setMessage("Budget deleted successfully!");
       await fetchBudgets();
     } catch (error) {
       console.error(
-         "Error saving budget:",
-         error.response?.data || error.message
-         );
+        "Error deleting budget:",
+        error.response?.data || error.message
+      );
+
+      setMessage(
+        error.response?.data?.message || "Failed to delete budget"
+      );
     }
   };
 
@@ -124,16 +146,9 @@ function Budgets() {
         <div className="budget-form-container">
           <h2>{editingId ? "Edit Budget" : "Add Budget"}</h2>
 
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              name="user"
-              placeholder="User ID"
-              value={formData.user}
-              onChange={handleChange}
-              required
-            />
+          {message && <p>{message}</p>}
 
+          <form onSubmit={handleSubmit}>
             <input
               type="text"
               name="category"
@@ -149,6 +164,7 @@ function Budgets() {
               placeholder="Budget Amount"
               value={formData.amount}
               onChange={handleChange}
+              min="1"
               required
             />
 
@@ -167,6 +183,7 @@ function Budgets() {
               type="number"
               name="year"
               placeholder="Year"
+              min="2000"
               value={formData.year}
               onChange={handleChange}
               required
@@ -198,7 +215,9 @@ function Budgets() {
           <div className="budget-list">
             {budgets.map((budget) => (
               <div className="budget-card" key={budget._id}>
-                <h3>Budget</h3>
+                <h3>
+                  {budget.category?.name || "Budget"}
+                </h3>
 
                 <p>
                   <strong>Amount:</strong> ₹{budget.amount}
