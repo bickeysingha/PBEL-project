@@ -1,3 +1,4 @@
+const authRoutes = require("./routes/authRoutes");
 const express = require("express");
 const cors = require("cors");
 
@@ -29,6 +30,7 @@ app.use("/api/budgets", budgetRoutes);
 app.use("/api/temp", tempRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/auth", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 

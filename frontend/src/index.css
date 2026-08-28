@@ -218,3 +218,151 @@ main {
 .chart-container h2 {
   margin-bottom: 20px;
 }
+/* Authentication pages */
+
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: #f4f6f9;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.auth-card h1 {
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.auth-card h2 {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.form-group input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+.auth-card button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #387ff0;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.auth-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-card p {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.auth-error {
+  margin-bottom: 16px;
+  padding: 10px;
+  border-radius: 6px;
+  background: #ffe5e5;
+  color: #b00020;
+}
+
+.auth-success {
+  margin-bottom: 16px;
+  padding: 10px;
+  border-radius: 6px;
+  background: #e5f7e5;
+  color: #176b17;
+}
+/* Profile page */
+
+.profile-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: #f4f6f9;
+}
+
+.profile-card {
+  width: 100%;
+  max-width: 500px;
+  padding: 32px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.profile-card h1 {
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.logout-button {
+  margin-top: 15px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #dc3545;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.back-button {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+.sidebar-logout {
+  width: 100%;
+  padding: 12px 14px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: white;
+  text-align: left;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.sidebar-logout:hover {
+  background: #dc3545;
+}
