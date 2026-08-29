@@ -1,46 +1,27 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import Budgets from "./pages/Budgets";
+import Categories from "./pages/Categories";
+import Transactions from "./pages/Transactions";
 import Reports from "./pages/Reports";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Profile from "./pages/Profile";
-
-import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public pages */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Default page */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-        {/* Protected pages */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/budgets" element={<Budgets />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/profile" element={<Profile />} />
-        </Route>
+        {/* Application pages */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/budgets" element={<Budgets />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/transactions" element={<Transactions />} />
+        <Route path="/reports" element={<Reports />} />
 
-        {/* Default route */}
-        <Route
-          path="/"
-          element={<Navigate to="/dashboard" replace />}
-        />
-
-        {/* Unknown route */}
-        <Route
-          path="*"
-          element={<Navigate to="/dashboard" replace />}
-        />
+        {/* Unknown URL → Dashboard */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

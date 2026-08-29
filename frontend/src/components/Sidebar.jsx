@@ -1,17 +1,16 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 
 function Sidebar() {
-  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/dashboard");
   };
 
   return (
-    <div className="sidebar">
+    <aside className="sidebar">
       <h2>Expense Tracker</h2>
 
       <nav>
@@ -19,19 +18,21 @@ function Sidebar() {
 
         <NavLink to="/budgets">Budgets</NavLink>
 
+        <NavLink to="/categories">Categories</NavLink>
+
+        <NavLink to="/transactions">Transactions</NavLink>
+
         <NavLink to="/reports">Reports</NavLink>
-
-        <NavLink to="/profile">Profile</NavLink>
-
-        <button
-          type="button"
-          className="sidebar-logout"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
       </nav>
-    </div>
+
+      <button
+        type="button"
+        className="logout-button"
+        onClick={handleLogout}
+      >
+        Logout
+      </button>
+    </aside>
   );
 }
 

@@ -1,18 +1,11 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:5000/api/categories";
-
-const getConfig = () => {
-  const token = localStorage.getItem("token");
-
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-};
+import api from "./api";
 
 export const getCategories = async () => {
-  const response = await axios.get(API_URL, getConfig());
+  const response = await api.get("/categories");
+  return response.data;
+};
+
+export const createCategory = async (categoryData) => {
+  const response = await api.post("/categories", categoryData);
   return response.data;
 };

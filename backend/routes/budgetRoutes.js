@@ -11,17 +11,11 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// All budget routes require login
 router.use(authMiddleware);
 
-router
-  .route("/")
-  .get(getBudgets)
-  .post(createBudget);
-
-router
-  .route("/:id")
-  .put(updateBudget)
-  .delete(deleteBudget);
+router.get("/", getBudgets);
+router.post("/", createBudget);
+router.put("/:id", updateBudget);
+router.delete("/:id", deleteBudget);
 
 module.exports = router;

@@ -6,6 +6,7 @@ const budgetSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     category: {
@@ -22,21 +23,23 @@ const budgetSchema = new mongoose.Schema(
 
     month: {
       type: Number,
-      required: true,
-      min: 1,
-      max: 12,
+      required: [true, "Month is required"],
+      min: [1, "Month must be between 1 and 12"],
+      max: [12, "Month must be between 1 and 12"],
     },
 
     year: {
       type: Number,
-      required: true,
+      required: [true, "Year is required"],
+      min: [2000, "Invalid year"],
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const Budget = mongoose.model("Budget", budgetSchema);
+budgetSchema.index(
+  { user: 1, category: 1, month: 1, year: 1 },
+  { unique: true }
+);
 
-module.exports = Budget;
+module.exports = mongoose.model("Budget", budgetSchema);
