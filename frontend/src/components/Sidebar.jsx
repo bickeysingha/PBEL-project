@@ -8,6 +8,8 @@ function Sidebar() {
       <nav>
         <NavLink to="/dashboard">Dashboard</NavLink>
         <NavLink to="/budgets">Budgets</NavLink>
+        <NavLink to="/categories">Categories</NavLink>
+        <NavLink to="/transactions">Transactions</NavLink>
         <NavLink to="/reports">Reports</NavLink>
       </nav>
     </div>

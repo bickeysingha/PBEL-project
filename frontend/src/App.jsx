@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import Budgets from "./pages/Budgets";
-import Reports from "./pages/Reports";
-import Transactions from "./pages/Transactions";
 import Categories from "./pages/Categories";
+import Transactions from "./pages/Transactions";
+import Reports from "./pages/Reports";
 
 function App() {
   return (
@@ -14,9 +14,9 @@ function App() {
 
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/budgets" element={<Budgets />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/transactions" element={<Transactions />} />
         <Route path="/categories" element={<Categories />} />
+        <Route path="/transactions" element={<Transactions />} />
+        <Route path="/reports" element={<Reports />} />
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
