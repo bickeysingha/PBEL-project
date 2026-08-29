@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 
 function Login() {
-  const navigate = useNavigate();
   const { login, loading } = useAuth();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -14,10 +14,12 @@ function Login() {
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -27,10 +29,10 @@ function Login() {
     try {
       await login(formData);
       navigate("/dashboard");
-    } catch (error) {
+    } catch (err) {
       setError(
-        error.response?.data?.message ||
-          "Login failed. Please try again."
+        err.response?.data?.message ||
+          "Invalid email or password"
       );
     }
   };
@@ -39,13 +41,24 @@ function Login() {
     <div className="auth-container">
       <div className="auth-card">
         <h1>Expense Tracker</h1>
-        <h2>Login</h2>
 
-        {error && <div className="auth-error">{error}</div>}
+        <h2>Welcome Back</h2>
+
+        <p className="auth-subtitle">
+          Sign in to manage your finances.
+        </p>
+
+        {error && (
+          <div className="auth-error">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">
+              Email
+            </label>
 
             <input
               id="email"
@@ -59,7 +72,9 @@ function Login() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">
+              Password
+            </label>
 
             <input
               id="password"
@@ -72,14 +87,19 @@ function Login() {
             />
           </div>
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+          <button
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Login"}
           </button>
         </form>
 
         <p>
           Don't have an account?{" "}
-          <Link to="/register">Register</Link>
+          <Link to="/register">
+            Register
+          </Link>
         </p>
       </div>
     </div>

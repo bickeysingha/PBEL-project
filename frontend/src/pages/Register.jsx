@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 
 function Register() {
-  const navigate = useNavigate();
   const { register, loading } = useAuth();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -13,35 +13,37 @@ function Register() {
   });
 
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError("");
-    setSuccess("");
+    setMessage("");
 
     try {
       await register(formData);
 
-      setSuccess(
+      setMessage(
         "Registration successful. Redirecting to login..."
       );
 
       setTimeout(() => {
         navigate("/login");
       }, 1000);
-    } catch (error) {
+    } catch (err) {
       setError(
-        error.response?.data?.message ||
-          "Registration failed. Please try again."
+        err.response?.data?.message ||
+          "Registration failed"
       );
     }
   };
@@ -50,17 +52,30 @@ function Register() {
     <div className="auth-container">
       <div className="auth-card">
         <h1>Expense Tracker</h1>
+
         <h2>Create Account</h2>
 
-        {error && <div className="auth-error">{error}</div>}
+        <p className="auth-subtitle">
+          Start managing your finances today.
+        </p>
 
-        {success && (
-          <div className="auth-success">{success}</div>
+        {error && (
+          <div className="auth-error">
+            {error}
+          </div>
+        )}
+
+        {message && (
+          <div className="auth-success">
+            {message}
+          </div>
         )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="name">Name</label>
+            <label htmlFor="name">
+              Full Name
+            </label>
 
             <input
               id="name"
@@ -68,13 +83,15 @@ function Register() {
               type="text"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Enter your name"
+              placeholder="Enter your full name"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">
+              Email
+            </label>
 
             <input
               id="email"
@@ -88,7 +105,9 @@ function Register() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">
+              Password
+            </label>
 
             <input
               id="password"
@@ -102,14 +121,21 @@ function Register() {
             />
           </div>
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Creating account..." : "Register"}
+          <button
+            type="submit"
+            disabled={loading}
+          >
+            {loading
+              ? "Creating Account..."
+              : "Register"}
           </button>
         </form>
 
         <p>
           Already have an account?{" "}
-          <Link to="/login">Login</Link>
+          <Link to="/login">
+            Login
+          </Link>
         </p>
       </div>
     </div>

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import authService from "../services/authService";
 
 function Profile() {
-  const { user, token, logout } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -17,19 +17,18 @@ function Profile() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // Load profile from backend
   useEffect(() => {
     const loadProfile = async () => {
       try {
         const data = await authService.getProfile(token);
 
         setFormData({
-          name: data.user.name,
-          email: data.user.email,
+          name: data.user?.name || "",
+          email: data.user?.email || "",
         });
-      } catch (error) {
+      } catch (err) {
         setError(
-          error.response?.data?.message ||
+          err.response?.data?.message ||
             "Failed to load profile"
         );
       } finally {
@@ -43,10 +42,12 @@ function Profile() {
   }, [token]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -63,10 +64,13 @@ function Profile() {
         token
       );
 
-      setMessage(data.message);
-    } catch (error) {
+      setMessage(
+        data.message ||
+          "Profile updated successfully!"
+      );
+    } catch (err) {
       setError(
-        error.response?.data?.message ||
+        err.response?.data?.message ||
           "Failed to update profile"
       );
     } finally {
@@ -82,8 +86,16 @@ function Profile() {
   if (loading) {
     return (
       <div className="profile-container">
-        <div className="profile-card">
-          <p>Loading profile...</p>
+        <div className="profile-card profile-loading">
+          <div className="profile-avatar">
+            P
+          </div>
+
+          <h1>My Profile</h1>
+
+          <p>
+            Loading your profile...
+          </p>
         </div>
       </div>
     );
@@ -92,24 +104,42 @@ function Profile() {
   return (
     <div className="profile-container">
       <div className="profile-card">
-        <h1>My Profile</h1>
+        <div className="profile-header">
+          <div className="profile-avatar">
+            {formData.name
+              ? formData.name
+                  .charAt(0)
+                  .toUpperCase()
+              : "U"}
+          </div>
+
+          <h1>My Profile</h1>
+
+          <p>
+            Manage your personal information
+            and account settings.
+          </p>
+        </div>
 
         {error && (
-          <div className="auth-error">
+          <div className="profile-message profile-error">
             {error}
           </div>
         )}
 
         {message && (
-          <div className="auth-success">
+          <div className="profile-message profile-success">
             {message}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+          className="profile-form"
+        >
           <div className="form-group">
             <label htmlFor="name">
-              Name
+              Full Name
             </label>
 
             <input
@@ -118,13 +148,14 @@ function Profile() {
               type="text"
               value={formData.name}
               onChange={handleChange}
+              placeholder="Enter your full name"
               required
             />
           </div>
 
           <div className="form-group">
             <label htmlFor="email">
-              Email
+              Email Address
             </label>
 
             <input
@@ -133,19 +164,23 @@ function Profile() {
               type="email"
               value={formData.email}
               onChange={handleChange}
+              placeholder="Enter your email address"
               required
             />
           </div>
 
           <button
             type="submit"
+            className="profile-update-button"
             disabled={saving}
           >
             {saving
-              ? "Saving..."
+              ? "Saving Changes..."
               : "Update Profile"}
           </button>
         </form>
+
+        <div className="profile-divider" />
 
         <button
           type="button"
@@ -158,9 +193,11 @@ function Profile() {
         <button
           type="button"
           className="back-button"
-          onClick={() => navigate("/dashboard")}
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
-          Back to Dashboard
+                          Back to Dashboard
         </button>
       </div>
     </div>
