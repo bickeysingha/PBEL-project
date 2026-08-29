@@ -6,51 +6,75 @@ import {
   updateBudget,
   deleteBudget,
 } from "../services/budgetService";
+import { getCategories } from "../services/categoryService";
+
+function getErrorMessage(error, fallback) {
+  return error?.response?.data?.message || fallback;
+}
+
+const getInitialForm = () => ({
+  category: "",
+  amount: "",
+  month: "",
+  year: new Date().getFullYear(),
+});
 
 function Budgets() {
   const [budgets, setBudgets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-
-  const [formData, setFormData] = useState({
-    category: "",
-    amount: "",
-    month: "",
-    year: new Date().getFullYear(),
-  });
+  const [categories, setCategories] = useState([]);
+  const [formData, setFormData] = useState(getInitialForm);
 
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadBudgets = async () => {
+    const loadInitialData = async () => {
       try {
-        const data = await getBudgets();
+        const [budgetData, categoryData] = await Promise.all([
+          getBudgets(),
+          getCategories(),
+        ]);
 
-        if (!cancelled) {
-          setBudgets(Array.isArray(data) ? data : data?.budgets || []);
-          setLoading(false);
+        if (cancelled) {
+          return;
         }
+
+        setBudgets(
+          Array.isArray(budgetData)
+            ? budgetData
+            : budgetData?.budgets || []
+        );
+
+        setCategories(
+          Array.isArray(categoryData)
+            ? categoryData
+            : categoryData?.categories || []
+        );
       } catch (err) {
         if (!cancelled) {
           console.error(
-            "Error fetching budgets:",
+            "Error loading budgets:",
             err?.response?.data || err?.message
           );
 
           setError(
-            err?.response?.data?.message ||
-              "Failed to load budgets."
+            getErrorMessage(err, "Failed to load budgets.")
           );
-
+        }
+      } finally {
+        if (!cancelled) {
           setLoading(false);
         }
       }
     };
 
-    loadBudgets();
+    loadInitialData();
 
     return () => {
       cancelled = true;
@@ -61,22 +85,30 @@ function Budgets() {
     try {
       setError("");
 
-      const data = await getBudgets();
+      const [budgetData, categoryData] = await Promise.all([
+        getBudgets(),
+        getCategories(),
+      ]);
 
       setBudgets(
-        Array.isArray(data)
-          ? data
-          : data?.budgets || []
+        Array.isArray(budgetData)
+          ? budgetData
+          : budgetData?.budgets || []
+      );
+
+      setCategories(
+        Array.isArray(categoryData)
+          ? categoryData
+          : categoryData?.categories || []
       );
     } catch (err) {
       console.error(
-        "Error fetching budgets:",
+        "Error loading budgets:",
         err?.response?.data || err?.message
       );
 
       setError(
-        err?.response?.data?.message ||
-          "Failed to load budgets."
+        getErrorMessage(err, "Failed to load budgets.")
       );
     }
   };
@@ -91,24 +123,18 @@ function Budgets() {
   };
 
   const resetForm = () => {
-    setFormData({
-      category: "",
-      amount: "",
-      month: "",
-      year: new Date().getFullYear(),
-    });
-
+    setFormData(getInitialForm());
     setEditingId(null);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    setMessage("");
     setError("");
+    setMessage("");
 
-    if (!formData.category.trim()) {
-      setError("Category is required.");
+    if (!formData.category) {
+      setError("Please select a category.");
       return;
     }
 
@@ -117,20 +143,27 @@ function Budgets() {
       return;
     }
 
-    if (
-      Number(formData.month) < 1 ||
-      Number(formData.month) > 12
-    ) {
-      setError("Month must be between 1 and 12.");
+    const month = Number(formData.month);
+    const year = Number(formData.year);
+
+    if (month < 1 || month > 12) {
+      setError("Please select a valid month.");
+      return;
+    }
+
+    if (!year || year < 2020) {
+      setError("Please enter a valid year.");
       return;
     }
 
     try {
+      setSaving(true);
+
       const budgetData = {
-        category: formData.category.trim(),
+        category: formData.category,
         amount: Number(formData.amount),
-        month: Number(formData.month),
-        year: Number(formData.year),
+        month,
+        year,
       };
 
       if (editingId) {
@@ -150,26 +183,24 @@ function Budgets() {
       );
 
       setError(
-        err?.response?.data?.message ||
-          "Failed to save budget."
+        getErrorMessage(err, "Failed to save budget.")
       );
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEdit = (budget) => {
     setFormData({
-      category:
-        budget.category?._id ||
-        budget.category ||
-        "",
-      amount: budget.amount || "",
-      month: budget.month || "",
-      year:
-        budget.year ||
-        new Date().getFullYear(),
+      category: budget.category?._id || budget.category || "",
+      amount: budget.amount ?? "",
+      month: budget.month ?? "",
+      year: budget.year || new Date().getFullYear(),
     });
 
     setEditingId(budget._id);
+    setError("");
+    setMessage("");
 
     window.scrollTo({
       top: 0,
@@ -178,11 +209,11 @@ function Budgets() {
   };
 
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
+    const confirmed = window.confirm(
       "Are you sure you want to delete this budget?"
     );
 
-    if (!confirmDelete) {
+    if (!confirmed) {
       return;
     }
 
@@ -202,10 +233,28 @@ function Budgets() {
       );
 
       setError(
-        err?.response?.data?.message ||
-          "Failed to delete budget."
+        getErrorMessage(err, "Failed to delete budget.")
       );
     }
+  };
+
+  const getMonthName = (month) => {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    return months[Number(month) - 1] || month;
   };
 
   return (
@@ -246,14 +295,28 @@ function Budgets() {
             <label>
               Category
 
-              <input
-                type="text"
+              <select
                 name="category"
-                placeholder="Category ID"
                 value={formData.category}
                 onChange={handleChange}
                 required
-              />
+              >
+                <option value="">
+                  Select category
+                </option>
+
+                {categories.map((category) => (
+                  <option
+                    key={category._id}
+                    value={category._id}
+                  >
+                    {category.name}
+                    {category.type
+                      ? ` (${category.type})`
+                      : ""}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label>
@@ -316,10 +379,13 @@ function Budgets() {
               <button
                 className="primary-btn"
                 type="submit"
+                disabled={saving}
               >
-                {editingId
-                  ? "Update Budget"
-                  : "Add Budget"}
+                {saving
+                  ? "Saving..."
+                  : editingId
+                    ? "Update Budget"
+                    : "Add Budget"}
               </button>
 
               {editingId && (
@@ -327,12 +393,20 @@ function Budgets() {
                   type="button"
                   onClick={resetForm}
                   className="secondary-btn"
+                  disabled={saving}
                 >
                   Cancel
                 </button>
               )}
             </div>
           </form>
+
+          {categories.length === 0 && (
+            <p className="form-hint">
+              No categories found. Create a category
+              first from the Categories page.
+            </p>
+          )}
         </section>
 
         <section className="panel">
@@ -375,7 +449,7 @@ function Budgets() {
 
                   <p>
                     <strong>Month:</strong>{" "}
-                    {budget.month}
+                    {getMonthName(budget.month)}
                   </p>
 
                   <p>
@@ -386,9 +460,7 @@ function Budgets() {
                   <div className="budget-actions">
                     <button
                       type="button"
-                      onClick={() =>
-                        handleEdit(budget)
-                      }
+                      onClick={() => handleEdit(budget)}
                     >
                       Edit
                     </button>
@@ -397,9 +469,7 @@ function Budgets() {
                       type="button"
                       className="delete-btn"
                       onClick={() =>
-                        handleDelete(
-                          budget._id
-                        )
+                        handleDelete(budget._id)
                       }
                     >
                       Delete
