@@ -26,7 +26,6 @@ function Budgets() {
 
   const [editingId, setEditingId] = useState(null);
 
-  // Fetch budgets
   const fetchBudgets = async () => {
     try {
       const data = await getBudgets();
@@ -45,40 +44,43 @@ function Budgets() {
     }
   };
 
-  // Fetch categories
-const fetchCategories = async () => {
-  try {
-    const data = await getCategories();
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories();
 
-    console.log("Categories data:", data);
+      if (Array.isArray(data)) {
+        setCategories(data);
+      } else if (Array.isArray(data.categories)) {
+        setCategories(data.categories);
+      } else {
+        setCategories([]);
+        console.error("Categories is not an array:", data);
+      }
+    } catch (error) {
+      console.error(
+        "Error fetching categories:",
+        error.response?.data || error.message
+      );
 
-    // Handle different backend response formats
-    if (Array.isArray(data)) {
-      setCategories(data);
-    } else if (Array.isArray(data.categories)) {
-      setCategories(data.categories);
-    } else {
       setCategories([]);
-      console.error("Categories is not an array:", data);
+
+      setMessage(
+        error.response?.data?.message || "Failed to fetch categories"
+      );
     }
-  } catch (error) {
-    console.error(
-      "Error fetching categories:",
-      error.response?.data || error.message
-    );
+  };
 
-    setCategories([]);
-    setMessage(
-      error.response?.data?.message || "Failed to fetch categories"
-    );
-  }
-};
   useEffect(() => {
-    fetchBudgets();
-    fetchCategories();
-  }, []);
+  const loadBudgetPage = async () => {
+    await Promise.all([
+      fetchBudgets(),
+      fetchCategories(),
+    ]);
+  };
 
-  // Handle form input
+  loadBudgetPage();
+}, []);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -86,7 +88,6 @@ const fetchCategories = async () => {
     });
   };
 
-  // Reset form
   const resetForm = () => {
     setFormData({
       category: "",
@@ -98,7 +99,6 @@ const fetchCategories = async () => {
     setEditingId(null);
   };
 
-  // Add or update budget
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -134,7 +134,6 @@ const fetchCategories = async () => {
     }
   };
 
-  // Edit budget
   const handleEdit = (budget) => {
     setFormData({
       category: budget.category?._id || budget.category || "",
@@ -151,7 +150,6 @@ const fetchCategories = async () => {
     });
   };
 
-  // Delete budget
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this budget?"
@@ -177,137 +175,354 @@ const fetchCategories = async () => {
     }
   };
 
+  const getMonthName = (month) => {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    return months[Number(month) - 1] || month;
+  };
+
   return (
     <div className="app-layout">
       <Sidebar />
 
-      <main>
-        <h1>Budgets</h1>
+      <main className="budget-page">
 
-        <div className="budget-form-container">
-          <h2>{editingId ? "Edit Budget" : "Add Budget"}</h2>
-
-          {message && <p>{message}</p>}
-
-          <form onSubmit={handleSubmit}>
-            {/* CATEGORY DROPDOWN */}
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Category</option>
-
-              {categories.map((category) => (
-                <option key={category._id} value={category._id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-
-            {/* AMOUNT */}
-            <input
-              type="number"
-              name="amount"
-              placeholder="Budget Amount"
-              value={formData.amount}
-              onChange={handleChange}
-              min="1"
-              required
-            />
-
-            {/* MONTH */}
-            <select
-              name="month"
-              value={formData.month}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Month</option>
-              <option value="1">January</option>
-              <option value="2">February</option>
-              <option value="3">March</option>
-              <option value="4">April</option>
-              <option value="5">May</option>
-              <option value="6">June</option>
-              <option value="7">July</option>
-              <option value="8">August</option>
-              <option value="9">September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
-            </select>
-
-            {/* YEAR */}
-            <input
-              type="number"
-              name="year"
-              placeholder="Year"
-              min="2020"
-              value={formData.year}
-              onChange={handleChange}
-              required
-            />
-
-            <button type="submit">
-              {editingId ? "Update Budget" : "Add Budget"}
-            </button>
-
-            {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="cancel-btn"
-              >
-                Cancel
-              </button>
-            )}
-          </form>
+        {/* Page Header */}
+        <div className="budget-page-header">
+          <div>
+            <h1>Budgets</h1>
+            <p>
+              Set and manage your monthly spending limits.
+            </p>
+          </div>
         </div>
 
-        <h2 className="budget-list-title">Your Budgets</h2>
+        {/* Add / Edit Budget */}
+        <section className="budget-form-container">
 
-        {loading ? (
-          <p>Loading budgets...</p>
-        ) : budgets.length === 0 ? (
-          <p>No budgets found.</p>
-        ) : (
-          <div className="budget-list">
-            {budgets.map((budget) => (
-              <div className="budget-card" key={budget._id}>
-                <h3>
-                  {budget.category?.name || "Unknown Category"}
-                </h3>
+          <div className="budget-section-header">
+            <div>
+              <h2>
+                {editingId ? "Edit Budget" : "Add New Budget"}
+              </h2>
 
-                <p>
-                  <strong>Amount:</strong> ₹{budget.amount}
-                </p>
-
-                <p>
-                  <strong>Month:</strong> {budget.month}
-                </p>
-
-                <p>
-                  <strong>Year:</strong> {budget.year}
-                </p>
-
-                <div className="budget-actions">
-                  <button onClick={() => handleEdit(budget)}>
-                    Edit
-                  </button>
-
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(budget._id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+              <p>
+                {editingId
+                  ? "Update your existing budget."
+                  : "Create a spending limit for a category."}
+              </p>
+            </div>
           </div>
-        )}
+
+          {message && (
+            <div className="budget-message">
+              {message}
+            </div>
+          )}
+
+          <form
+            className="budget-form"
+            onSubmit={handleSubmit}
+          >
+
+            {/* Category */}
+            <div className="budget-field">
+              <label htmlFor="category">
+                Category
+              </label>
+
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                required
+              >
+                <option value="">
+                  Select Category
+                </option>
+
+                {categories.map((category) => (
+                  <option
+                    key={category._id}
+                    value={category._id}
+                  >
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+
+            {/* Amount */}
+            <div className="budget-field">
+              <label htmlFor="amount">
+                Budget Amount
+              </label>
+
+              <div className="budget-input-wrapper">
+                <span>₹</span>
+
+                <input
+                  id="amount"
+                  type="number"
+                  name="amount"
+                  placeholder="10,000"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  min="1"
+                  required
+                />
+              </div>
+            </div>
+
+
+            {/* Month */}
+            <div className="budget-field">
+              <label htmlFor="month">
+                Month
+              </label>
+
+              <select
+                id="month"
+                name="month"
+                value={formData.month}
+                onChange={handleChange}
+                required
+              >
+                <option value="">
+                  Select Month
+                </option>
+
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+
+
+            {/* Year */}
+            <div className="budget-field">
+              <label htmlFor="year">
+                Year
+              </label>
+
+              <input
+                id="year"
+                type="number"
+                name="year"
+                placeholder="2026"
+                min="2020"
+                value={formData.year}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+
+            {/* Buttons */}
+            <div className="budget-form-actions">
+
+              <button
+                type="submit"
+                className="budget-primary-button"
+              >
+                {editingId
+                  ? "Update Budget"
+                  : "Add Budget"}
+              </button>
+
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="budget-cancel-button"
+                >
+                  Cancel
+                </button>
+              )}
+
+            </div>
+
+          </form>
+
+        </section>
+
+
+        {/* Budget List */}
+        <section className="budget-list-section">
+
+          <div className="budget-list-header">
+            <div>
+              <h2>Your Budgets</h2>
+
+              <p>
+                Track the spending limits you've created.
+              </p>
+            </div>
+
+            <span className="budget-count">
+              {budgets.length}{" "}
+              {budgets.length === 1
+                ? "Budget"
+                : "Budgets"}
+            </span>
+          </div>
+
+
+          {loading ? (
+
+            <div className="budget-empty-state">
+              <div className="budget-loading-spinner"></div>
+
+              <p>
+                Loading budgets...
+              </p>
+            </div>
+
+          ) : budgets.length === 0 ? (
+
+            <div className="budget-empty-state">
+
+              <div className="budget-empty-icon">
+                ₹
+              </div>
+
+              <h3>
+                No budgets yet
+              </h3>
+
+              <p>
+                Create your first budget above to start
+                controlling your monthly spending.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="budget-list">
+
+              {budgets.map((budget) => (
+
+                <article
+                  className="budget-card"
+                  key={budget._id}
+                >
+
+                  <div className="budget-card-top">
+
+                    <div className="budget-category-icon">
+                      ₹
+                    </div>
+
+                    <div className="budget-card-title">
+
+                      <h3>
+                        {budget.category?.name ||
+                          "Unknown Category"}
+                      </h3>
+
+                      <span>
+                        {getMonthName(budget.month)}{" "}
+                        {budget.year}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="budget-amount">
+
+                    <span>
+                      Monthly Limit
+                    </span>
+
+                    <strong>
+                      ₹{Number(budget.amount).toLocaleString(
+                        "en-IN"
+                      )}
+                    </strong>
+
+                  </div>
+
+
+                  <div className="budget-card-details">
+
+                    <div>
+                      <span>Month</span>
+                      <strong>
+                        {getMonthName(budget.month)}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Year</span>
+                      <strong>
+                        {budget.year}
+                      </strong>
+                    </div>
+
+                  </div>
+
+
+                  <div className="budget-actions">
+
+                    <button
+                      type="button"
+                      className="budget-edit-button"
+                      onClick={() =>
+                        handleEdit(budget)
+                      }
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      className="budget-delete-button"
+                      onClick={() =>
+                        handleDelete(budget._id)
+                      }
+                    >
+                      Delete
+                    </button>
+
+                  </div>
+
+                </article>
+
+              ))}
+
+            </div>
+
+          )}
+
+        </section>
+
       </main>
     </div>
   );

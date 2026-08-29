@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import authService from "../services/authService";
 
 function Profile() {
-  const { user, token, logout } = useAuth();
+  const { token, logout } = useAuth();  
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -82,8 +82,9 @@ function Profile() {
   if (loading) {
     return (
       <div className="profile-container">
-        <div className="profile-card">
-          <p>Loading profile...</p>
+        <div className="profile-card profile-loading">
+          <div className="profile-loading-spinner"></div>
+          <p>Loading your profile...</p>
         </div>
       </div>
     );
@@ -92,24 +93,50 @@ function Profile() {
   return (
     <div className="profile-container">
       <div className="profile-card">
-        <h1>My Profile</h1>
 
+        {/* Profile Header */}
+        <div className="profile-header">
+
+          <div className="profile-avatar">
+            {formData.name
+              ? formData.name.charAt(0).toUpperCase()
+              : "U"}
+          </div>
+
+          <h1>My Profile</h1>
+
+          <p>
+            Manage your personal information and account
+            settings.
+          </p>
+        </div>
+
+        {/* Error Message */}
         {error && (
-          <div className="auth-error">
-            {error}
+          <div className="profile-alert profile-alert-error">
+            <span className="profile-alert-icon">!</span>
+            <span>{error}</span>
           </div>
         )}
 
+        {/* Success Message */}
         {message && (
-          <div className="auth-success">
-            {message}
+          <div className="profile-alert profile-alert-success">
+            <span className="profile-alert-icon">✓</span>
+            <span>{message}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
+        {/* Profile Form */}
+        <form
+          className="profile-form"
+          onSubmit={handleSubmit}
+        >
+
+          {/* Name */}
+          <div className="profile-form-group">
             <label htmlFor="name">
-              Name
+              Full Name
             </label>
 
             <input
@@ -118,13 +145,15 @@ function Profile() {
               type="text"
               value={formData.name}
               onChange={handleChange}
+              placeholder="Enter your full name"
               required
             />
           </div>
 
-          <div className="form-group">
+          {/* Email */}
+          <div className="profile-form-group">
             <label htmlFor="email">
-              Email
+              Email Address
             </label>
 
             <input
@@ -133,35 +162,53 @@ function Profile() {
               type="email"
               value={formData.email}
               onChange={handleChange}
+              placeholder="Enter your email address"
               required
             />
           </div>
 
+          {/* Update Button */}
           <button
             type="submit"
+            className="profile-update-button"
             disabled={saving}
           >
-            {saving
-              ? "Saving..."
-              : "Update Profile"}
+            {saving ? (
+              <>
+                <span className="profile-button-spinner"></span>
+                Saving Changes...
+              </>
+            ) : (
+              "Update Profile"
+            )}
           </button>
+
         </form>
 
-        <button
-          type="button"
-          className="logout-button"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
+        {/* Divider */}
+        <div className="profile-divider"></div>
 
-        <button
-          type="button"
-          className="back-button"
-          onClick={() => navigate("/dashboard")}
-        >
-          Back to Dashboard
-        </button>
+        {/* Actions */}
+        <div className="profile-actions">
+
+          <button
+            type="button"
+            className="logout-button"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+
+          <button
+            type="button"
+            className="back-button"
+            onClick={() => navigate("/dashboard")}
+          >
+            ← Back to Dashboard
+          </button>
+
+        </div>
+
       </div>
     </div>
   );

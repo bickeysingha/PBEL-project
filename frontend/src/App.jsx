@@ -18,29 +18,72 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public pages */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
 
-        {/* Protected pages */}
+        {/* Public routes */}
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+
+        {/* Protected routes */}
+
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/budgets" element={<Budgets />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/profile" element={<Profile />} />
+
+          <Route
+            path="/dashboard"
+            element={<Dashboard />}
+          />
+
+          <Route
+            path="/budgets"
+            element={<Budgets />}
+          />
+
+          <Route
+            path="/reports"
+            element={<Reports />}
+          />
+
+          <Route
+            path="/profile"
+            element={<Profile />}
+          />
+
         </Route>
 
+
         {/* Default route */}
+
         <Route
           path="/"
-          element={<Navigate to="/dashboard" replace />}
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
         />
 
+
         {/* Unknown route */}
+
         <Route
           path="*"
-          element={<Navigate to="/dashboard" replace />}
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
         />
+
       </Routes>
     </BrowserRouter>
   );
