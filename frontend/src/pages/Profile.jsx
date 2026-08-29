@@ -4,7 +4,7 @@ import { useAuth } from "../context/useAuth";
 import authService from "../services/authService";
 
 function Profile() {
-  const { token, logout } = useAuth();  
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -17,19 +17,22 @@ function Profile() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // Load profile from backend
   useEffect(() => {
+    if (!token) {
+      return;
+    }
+
     const loadProfile = async () => {
       try {
         const data = await authService.getProfile(token);
 
         setFormData({
-          name: data.user.name,
-          email: data.user.email,
+          name: data.user?.name || "",
+          email: data.user?.email || "",
         });
-      } catch (error) {
+      } catch (err) {
         setError(
-          error.response?.data?.message ||
+          err.response?.data?.message ||
             "Failed to load profile"
         );
       } finally {
@@ -37,16 +40,16 @@ function Profile() {
       }
     };
 
-    if (token) {
-      loadProfile();
-    }
+    loadProfile();
   }, [token]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -63,10 +66,12 @@ function Profile() {
         token
       );
 
-      setMessage(data.message);
-    } catch (error) {
+      setMessage(
+        data.message || "Profile updated successfully"
+      );
+    } catch (err) {
       setError(
-        error.response?.data?.message ||
+        err.response?.data?.message ||
           "Failed to update profile"
       );
     } finally {
@@ -83,7 +88,10 @@ function Profile() {
     return (
       <div className="profile-container">
         <div className="profile-card profile-loading">
-          <div className="profile-loading-spinner"></div>
+          <div className="profile-avatar">P</div>
+
+          <h1>My Profile</h1>
+
           <p>Loading your profile...</p>
         </div>
       </div>
@@ -94,9 +102,7 @@ function Profile() {
     <div className="profile-container">
       <div className="profile-card">
 
-        {/* Profile Header */}
         <div className="profile-header">
-
           <div className="profile-avatar">
             {formData.name
               ? formData.name.charAt(0).toUpperCase()
@@ -111,30 +117,23 @@ function Profile() {
           </p>
         </div>
 
-        {/* Error Message */}
         {error && (
-          <div className="profile-alert profile-alert-error">
-            <span className="profile-alert-icon">!</span>
-            <span>{error}</span>
+          <div className="profile-message profile-error">
+            {error}
           </div>
         )}
 
-        {/* Success Message */}
         {message && (
-          <div className="profile-alert profile-alert-success">
-            <span className="profile-alert-icon">✓</span>
-            <span>{message}</span>
+          <div className="profile-message profile-success">
+            {message}
           </div>
         )}
 
-        {/* Profile Form */}
         <form
-          className="profile-form"
           onSubmit={handleSubmit}
+          className="profile-form"
         >
-
-          {/* Name */}
-          <div className="profile-form-group">
+          <div className="form-group">
             <label htmlFor="name">
               Full Name
             </label>
@@ -150,8 +149,7 @@ function Profile() {
             />
           </div>
 
-          {/* Email */}
-          <div className="profile-form-group">
+          <div className="form-group">
             <label htmlFor="email">
               Email Address
             </label>
@@ -167,47 +165,34 @@ function Profile() {
             />
           </div>
 
-          {/* Update Button */}
           <button
             type="submit"
             className="profile-update-button"
             disabled={saving}
           >
-            {saving ? (
-              <>
-                <span className="profile-button-spinner"></span>
-                Saving Changes...
-              </>
-            ) : (
-              "Update Profile"
-            )}
+            {saving
+              ? "Saving Changes..."
+              : "Update Profile"}
           </button>
-
         </form>
 
-        {/* Divider */}
-        <div className="profile-divider"></div>
+        <div className="profile-divider" />
 
-        {/* Actions */}
-        <div className="profile-actions">
+        <button
+          type="button"
+          className="logout-button"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
 
-          <button
-            type="button"
-            className="logout-button"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-
-          <button
-            type="button"
-            className="back-button"
-            onClick={() => navigate("/dashboard")}
-          >
-            ← Back to Dashboard
-          </button>
-
-        </div>
+        <button
+          type="button"
+          className="back-button"
+          onClick={() => navigate("/dashboard")}
+        >
+          ← Back to Dashboard
+        </button>
 
       </div>
     </div>

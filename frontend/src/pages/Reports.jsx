@@ -27,9 +27,6 @@ function Reports() {
     const fetchReports = async () => {
       try {
         const data = await getReportsData();
-
-        console.log("Reports data:", data);
-
         setReportData(data);
       } catch (error) {
         console.error(
@@ -46,12 +43,31 @@ function Reports() {
     fetchReports();
   }, []);
 
+  const formatCurrency = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN")}`;;
+
+  const formatMonth = (month, year) => {
+    if (!month || !year) return "Unknown";
+
+    const date = new Date(year, month - 1);
+
+    return date.toLocaleDateString("en-IN", {
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   if (loading) {
     return (
       <div className="app-layout">
         <Sidebar />
-        <main>
-          <h2>Loading reports...</h2>
+
+        <main className="reports-page">
+          <div className="reports-loading">
+            <div className="reports-loading-spinner"></div>
+            <h2>Loading reports...</h2>
+            <p>Preparing your financial insights.</p>
+          </div>
         </main>
       </div>
     );
@@ -61,21 +77,34 @@ function Reports() {
     return (
       <div className="app-layout">
         <Sidebar />
-        <main>
-          <h2>{error}</h2>
+
+        <main className="reports-page">
+          <div className="reports-error">
+            <div className="reports-error-icon">!</div>
+
+            <h2>Unable to load reports</h2>
+
+            <p>{error}</p>
+          </div>
         </main>
       </div>
     );
   }
 
-  // Pie Chart Data
+  /* =========================================
+     CATEGORY DATA
+  ========================================= */
+
   const categoryData =
     reportData?.categoryWiseExpenses?.map((item) => ({
       name: item._id || "Unknown",
       value: item.total || 0,
     })) || [];
 
-  // Bar Chart Data
+  /* =========================================
+     MONTHLY DATA
+  ========================================= */
+
   const monthlyData = {};
 
   reportData?.monthlySummary?.forEach((item) => {
@@ -87,7 +116,7 @@ function Reports() {
 
     if (!monthlyData[key]) {
       monthlyData[key] = {
-        month: `${month}/${year}`,
+        month: formatMonth(month, year),
         income: 0,
         expense: 0,
       };
@@ -104,101 +133,398 @@ function Reports() {
 
   const monthlyChartData = Object.values(monthlyData);
 
-  // Line Chart Data
+  /* =========================================
+     SPENDING TREND
+  ========================================= */
+
   const spendingTrendData =
     reportData?.spendingTrend?.map((item) => ({
-      month:
-        item._id?.month && item._id?.year
-          ? `${item._id.month}/${item._id.year}`
-          : "Unknown",
+      month: formatMonth(
+        item._id?.month,
+        item._id?.year
+      ),
       expense: item.total || 0,
     })) || [];
+
+  /* =========================================
+     SUMMARY VALUES
+  ========================================= */
+
+  const totalExpenses = categoryData.reduce(
+    (sum, item) => sum + Number(item.value || 0),
+    0
+  );
+
+  const totalIncome = monthlyChartData.reduce(
+    (sum, item) => sum + Number(item.income || 0),
+    0
+  );
+
+  const balance = totalIncome - totalExpenses;
 
   return (
     <div className="app-layout">
       <Sidebar />
 
-      <main>
-        <h1>Reports</h1>
+      <main className="reports-page">
 
-        {/* Pie Chart */}
-        <div className="chart-container">
-          <h2>Category-wise Expenses</h2>
+        {/* =====================================
+            PAGE HEADER
+        ===================================== */}
+
+        <div className="reports-page-header">
+          <div>
+            <h1>Reports</h1>
+
+            <p>
+              Understand your spending patterns and
+              financial performance.
+            </p>
+          </div>
+        </div>
+
+
+        {/* =====================================
+            SUMMARY CARDS
+        ===================================== */}
+
+        <div className="reports-summary-grid">
+
+          <div className="reports-summary-card">
+
+            <div className="reports-summary-icon income-icon">
+              ↑
+            </div>
+
+            <div>
+              <span>Total Income</span>
+
+              <strong>
+                {formatCurrency(totalIncome)}
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div className="reports-summary-card">
+
+            <div className="reports-summary-icon expense-icon">
+              ↓
+            </div>
+
+            <div>
+              <span>Total Expenses</span>
+
+              <strong>
+                {formatCurrency(totalExpenses)}
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div className="reports-summary-card">
+
+            <div className="reports-summary-icon balance-icon">
+              ₹
+            </div>
+
+            <div>
+              <span>Net Balance</span>
+
+              <strong>
+                {formatCurrency(balance)}
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* =====================================
+            CATEGORY EXPENSES
+        ===================================== */}
+
+        <section className="report-chart-card">
+
+          <div className="report-chart-header">
+
+            <div>
+              <h2>Category-wise Expenses</h2>
+
+              <p>
+                See where your money is being spent.
+              </p>
+            </div>
+
+            <span className="report-chart-badge">
+              {categoryData.length}{" "}
+              {categoryData.length === 1
+                ? "Category"
+                : "Categories"}
+            </span>
+
+          </div>
+
 
           {categoryData.length === 0 ? (
-            <p>No expense data available.</p>
+
+            <div className="report-empty-state">
+              <div className="report-empty-icon">
+                ₹
+              </div>
+
+              <h3>
+                No expense data available
+              </h3>
+
+              <p>
+                Add some expense transactions to see
+                your category breakdown.
+              </p>
+            </div>
+
           ) : (
-            <ResponsiveContainer width="100%" height={400}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={130}
-                  label
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} />
-                  ))}
-                </Pie>
 
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="report-chart">
+
+              <ResponsiveContainer
+                width="100%"
+                height={400}
+              >
+                <PieChart>
+
+                  <Pie
+                    data={categoryData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={135}
+                    innerRadius={65}
+                    paddingAngle={3}
+                    label
+                  >
+                    {categoryData.map(
+                      (entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                        />
+                      )
+                    )}
+                  </Pie>
+
+                  <Tooltip
+                    formatter={(value) =>
+                      formatCurrency(value)
+                    }
+                  />
+
+                  <Legend />
+
+                </PieChart>
+              </ResponsiveContainer>
+
+            </div>
+
           )}
-        </div>
 
-        {/* Bar Chart */}
-        <div className="chart-container">
-          <h2>Monthly Income vs Expense</h2>
+        </section>
+
+
+        {/* =====================================
+            MONTHLY INCOME VS EXPENSE
+        ===================================== */}
+
+        <section className="report-chart-card">
+
+          <div className="report-chart-header">
+
+            <div>
+              <h2>
+                Monthly Income vs Expense
+              </h2>
+
+              <p>
+                Compare your income and expenses
+                month by month.
+              </p>
+            </div>
+
+          </div>
+
 
           {monthlyChartData.length === 0 ? (
-            <p>No monthly data available.</p>
+
+            <div className="report-empty-state">
+              <div className="report-empty-icon">
+                ₹
+              </div>
+
+              <h3>
+                No monthly data available
+              </h3>
+
+              <p>
+                Your monthly financial comparison
+                will appear here.
+              </p>
+            </div>
+
           ) : (
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={monthlyChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
 
-                <Bar dataKey="income" name="Income" />
+            <div className="report-chart">
 
-                <Bar dataKey="expense" name="Expense" />
-              </BarChart>
-            </ResponsiveContainer>
+              <ResponsiveContainer
+                width="100%"
+                height={400}
+              >
+                <BarChart
+                  data={monthlyChartData}
+                  margin={{
+                    top: 10,
+                    right: 20,
+                    left: 10,
+                    bottom: 10,
+                  }}
+                >
+
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                  />
+
+                  <XAxis
+                    dataKey="month"
+                  />
+
+                  <YAxis />
+
+                  <Tooltip
+                    formatter={(value) =>
+                      formatCurrency(value)
+                    }
+                  />
+
+                  <Legend />
+
+                  <Bar
+                    dataKey="income"
+                    name="Income"
+                    radius={[6, 6, 0, 0]}
+                  />
+
+                  <Bar
+                    dataKey="expense"
+                    name="Expense"
+                    radius={[6, 6, 0, 0]}
+                  />
+
+                </BarChart>
+              </ResponsiveContainer>
+
+            </div>
+
           )}
-        </div>
 
-        {/* Line Chart */}
-        <div className="chart-container">
-          <h2>Monthly Spending Trend</h2>
+        </section>
+
+
+        {/* =====================================
+            SPENDING TREND
+        ===================================== */}
+
+        <section className="report-chart-card">
+
+          <div className="report-chart-header">
+
+            <div>
+              <h2>
+                Monthly Spending Trend
+              </h2>
+
+              <p>
+                Track how your expenses change over time.
+              </p>
+            </div>
+
+          </div>
+
 
           {spendingTrendData.length === 0 ? (
-            <p>No spending trend data available.</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={spendingTrendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
 
-                <Line
-                  type="monotone"
-                  dataKey="expense"
-                  name="Expenses"
-                  strokeWidth={3}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="report-empty-state">
+
+              <div className="report-empty-icon">
+                ↗
+              </div>
+
+              <h3>
+                No spending trend data available
+              </h3>
+
+              <p>
+                Add expense transactions to start
+                building your spending trend.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="report-chart">
+
+              <ResponsiveContainer
+                width="100%"
+                height={400}
+              >
+                <LineChart
+                  data={spendingTrendData}
+                  margin={{
+                    top: 10,
+                    right: 20,
+                    left: 10,
+                    bottom: 10,
+                  }}
+                >
+
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                  />
+
+                  <XAxis
+                    dataKey="month"
+                  />
+
+                  <YAxis />
+
+                  <Tooltip
+                    formatter={(value) =>
+                      formatCurrency(value)
+                    }
+                  />
+
+                  <Legend />
+
+                  <Line
+                    type="monotone"
+                    dataKey="expense"
+                    name="Expenses"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+
+                </LineChart>
+              </ResponsiveContainer>
+
+            </div>
+
           )}
-        </div>
+
+        </section>
+
       </main>
     </div>
   );
