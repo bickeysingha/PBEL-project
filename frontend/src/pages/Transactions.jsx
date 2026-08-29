@@ -53,11 +53,7 @@ function Transactions() {
    * Only show categories matching the selected
    * transaction type.
    */
-  const visibleCategories = useMemo(() => {
-    return categories.filter(
-      (category) => category.type === form.type
-    );
-  }, [categories, form.type]);
+  const visibleCategories = categories;
 
   /*
    * Load transactions and categories.

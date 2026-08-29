@@ -5,6 +5,7 @@ import {
   createBudget,
   updateBudget,
   deleteBudget,
+  getBudgetSummary,
 } from "../services/budgetService";
 import { getCategories } from "../services/categoryService";
 
@@ -27,6 +28,7 @@ function Budgets() {
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [budgetSummaries, setBudgetSummaries] = useState([]);
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -36,10 +38,12 @@ function Budgets() {
 
     const loadInitialData = async () => {
       try {
-        const [budgetData, categoryData] = await Promise.all([
-          getBudgets(),
-          getCategories(),
-        ]);
+       const [budgetData, categoryData, summaryData] =
+            await Promise.all([
+              getBudgets(),
+              getCategories(),
+              getBudgetSummary(),
+            ]);
 
         if (cancelled) {
           return;
@@ -50,11 +54,15 @@ function Budgets() {
             ? budgetData
             : budgetData?.budgets || []
         );
+        console.log("CATEGORIES FROM API:", categoryData);
 
         setCategories(
           Array.isArray(categoryData)
             ? categoryData
             : categoryData?.categories || []
+        );
+        setBudgetSummaries(
+           Array.isArray(summaryData) ? summaryData : []
         );
       } catch (err) {
         if (!cancelled) {
@@ -85,10 +93,12 @@ function Budgets() {
     try {
       setError("");
 
-      const [budgetData, categoryData] = await Promise.all([
-        getBudgets(),
-        getCategories(),
-      ]);
+     const [budgetData, categoryData, summaryData] =
+            await Promise.all([
+              getBudgets(),
+              getCategories(),
+              getBudgetSummary(),
+            ]);
 
       setBudgets(
         Array.isArray(budgetData)
@@ -100,6 +110,9 @@ function Budgets() {
         Array.isArray(categoryData)
           ? categoryData
           : categoryData?.categories || []
+      );
+      setBudgetSummaries(
+         Array.isArray(summaryData) ? summaryData : []
       );
     } catch (err) {
       console.error(
@@ -255,6 +268,12 @@ function Budgets() {
     ];
 
     return months[Number(month) - 1] || month;
+  };
+
+  const getSummaryForBudget = (budgetId) => {
+     return budgetSummaries.find(
+       (summary) => summary._id === budgetId
+     );
   };
 
   return (
@@ -428,7 +447,11 @@ function Budgets() {
             </p>
           ) : (
             <div className="budget-list">
-              {budgets.map((budget) => (
+              {budgets.map((budget) => {
+             const summary = getSummaryForBudget(budget._id);
+
+              return (
+                
                 <div
                   className="budget-card"
                   key={budget._id}
@@ -457,6 +480,39 @@ function Budgets() {
                     {budget.year}
                   </p>
 
+                  {summary && (
+                    <div className="budget-summary">
+                     <p>
+                       <strong>Spent:</strong>{" "}
+                       ₹{Number(summary.spent).toLocaleString("en-IN")}
+                    </p>
+
+                     <p>
+                       <strong>Remaining:</strong>{" "}
+                       ₹{Number(summary.remaining).toLocaleString("en-IN")}
+                     </p>
+
+                     <p>
+                       <strong>Progress:</strong>{" "}
+                       {summary.percentage}%
+                     </p>
+
+                    <div className="budget-progress">
+                     <div
+                      className="budget-progress-bar"
+                      style={{
+                       width: `${Math.min(summary.percentage, 100)}%`,
+                      }}
+                    />
+                 </div>
+
+                <p>
+                 <strong>Status:</strong>{" "}
+                  {summary.status}
+                </p>
+              </div>
+           )}
+
                   <div className="budget-actions">
                     <button
                       type="button"
@@ -476,7 +532,8 @@ function Budgets() {
                     </button>
                   </div>
                 </div>
-              ))}
+              );
+          })}
             </div>
           )}
         </section>

@@ -1,10 +1,12 @@
+const mongoose = require("mongoose");
 const Transaction = require("../models/Transaction");
 
 // @desc Get reports data
 // @route GET /api/reports
 const getReports = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = new mongoose.Types.ObjectId(req.user._id);
+    
 
     // Category-wise expenses for logged-in user
     const categoryWiseExpenses = await Transaction.aggregate([

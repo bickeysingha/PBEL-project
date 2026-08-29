@@ -34,11 +34,10 @@ const validateTransactionData = async ({ type, amount, category, date }, userId)
   const categoryExists = await Category.findOne({
     _id: category,
     user: userId,
-    type,
   });
 
   if (!categoryExists) {
-    return "Category not found or does not match transaction type";
+    return "Category not found ";
   }
 
   return null;
@@ -52,7 +51,7 @@ const createTransaction = async (req, res) => {
 
     const validationError = await validateTransactionData(
       { type, amount, category, date },
-      req.user.id
+      req.user._id
     );
 
     if (validationError) {
@@ -62,7 +61,7 @@ const createTransaction = async (req, res) => {
     }
 
     const transaction = await Transaction.create({
-      user: req.user.id,
+      user: req.user._id,
       type,
       amount: Number(amount),
       category,
@@ -104,7 +103,7 @@ const getTransactions = async (req, res) => {
     } = req.query;
 
     const filter = {
-      user: req.user.id,
+      user: req.user._id,
     };
 
     if (type) {
@@ -187,7 +186,7 @@ const getTransactionById = async (req, res) => {
 
     const transaction = await Transaction.findOne({
       _id: id,
-      user: req.user.id,
+      user: req.user._id,
     }).populate("category", "name type");
 
     if (!transaction) {
@@ -221,7 +220,7 @@ const updateTransaction = async (req, res) => {
 
     const transaction = await Transaction.findOne({
       _id: id,
-      user: req.user.id,
+      user: req.user._id,
     });
 
     if (!transaction) {
@@ -240,7 +239,7 @@ const updateTransaction = async (req, res) => {
 
     const validationError = await validateTransactionData(
       { type, amount, category, date },
-      req.user.id
+      req.user._id
     );
 
     if (validationError) {
@@ -292,7 +291,7 @@ const deleteTransaction = async (req, res) => {
 
     const transaction = await Transaction.findOneAndDelete({
       _id: id,
-      user: req.user.id,
+      user: req.user._id,
     });
 
     if (!transaction) {

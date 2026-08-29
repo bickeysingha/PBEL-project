@@ -1,4 +1,5 @@
 const Budget = require("../models/Budget");
+const Transaction = require("../models/Transaction");
 
 // @desc    Get logged-in user's budgets
 // @route   GET /api/budgets
@@ -6,7 +7,7 @@ const getBudgets = async (req, res) => {
   try {
     const budgets = await Budget.find({
       user: req.user._id,
-    }).populate("category", "name type");
+    }).populate("category", "name");
 
     res.status(200).json(budgets);
   } catch (error) {
@@ -49,10 +50,9 @@ const createBudget = async (req, res) => {
       year: Number(year),
     });
 
-    const populatedBudget = await Budget.findById(budget._id).populate(
-      "category",
-      "name type"
-    );
+    const populatedBudget = await Budget.findById(
+      budget._id
+    ).populate("category", "name");
 
     res.status(201).json(populatedBudget);
   } catch (error) {
@@ -84,7 +84,7 @@ const updateBudget = async (req, res) => {
         new: true,
         runValidators: true,
       }
-    ).populate("category", "name type");
+    ).populate("category", "name");
 
     if (!budget) {
       return res.status(404).json({
@@ -127,9 +127,91 @@ const deleteBudget = async (req, res) => {
   }
 };
 
+// @desc    Get budget spending summary
+// @route   GET /api/budgets/summary
+const getBudgetSummary = async (req, res) => {
+  try {
+    const budgets = await Budget.find({
+      user: req.user._id,
+    }).populate("category", "name");
+
+    const summaries = await Promise.all(
+      budgets
+        .filter((budget) => budget.category)
+        .map(async (budget) => {
+        const startDate = new Date(
+          budget.year,
+          budget.month - 1,
+          1
+        );
+
+        const endDate = new Date(
+          budget.year,
+          budget.month,
+          1
+        );
+
+        const result = await Transaction.aggregate([
+          {
+            $match: {
+              user: budget.user,
+              category: budget.category._id,
+              type: "expense",
+              date: {
+                $gte: startDate,
+                $lt: endDate,
+              },
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              spent: { $sum: "$amount" },
+            },
+          },
+        ]);
+
+        const spent = result.length > 0
+          ? result[0].spent
+          : 0;
+
+        const remaining = budget.amount - spent;
+
+        const percentage =
+          budget.amount > 0
+            ? (spent / budget.amount) * 100
+            : 0;
+
+        return {
+          _id: budget._id,
+          category: budget.category,
+          amount: budget.amount,
+          month: budget.month,
+          year: budget.year,
+          spent,
+          remaining,
+          percentage: Math.round(percentage * 100) / 100,
+          status:
+            spent > budget.amount
+              ? "Over Budget"
+              : "Within Budget",
+        };
+      })
+    );
+
+    res.status(200).json(summaries);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching budget summary",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getBudgets,
   createBudget,
   updateBudget,
   deleteBudget,
+  getBudgetSummary,
 };

@@ -6,7 +6,7 @@ const getDashboard = async (req, res) => {
   try {
     // Only get transactions belonging to the logged-in user
     const transactions = await Transaction.find({
-      user: req.user.id,
+      user: req.user._id,
     });
 
     let totalIncome = 0;
@@ -24,7 +24,7 @@ const getDashboard = async (req, res) => {
 
     // Get only this user's recent transactions
     const recentTransactions = await Transaction.find({
-      user: req.user.id,
+      user: req.user._id,
     })
       .sort({ date: -1 })
       .limit(5)

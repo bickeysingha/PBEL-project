@@ -3,54 +3,42 @@ import Sidebar from "../components/Sidebar";
 import {
   getCategories,
   createCategory,
+  deleteCategory,
 } from "../services/categoryService";
 
 function Categories() {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState("");
-  const [type, setType] = useState("expense");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await getCategories();
+
+      setCategories(
+        Array.isArray(data) ? data : data?.categories || []
+      );
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          "Failed to load categories."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let cancelled = false;
-
-    const loadCategories = async () => {
-      try {
-        const data = await getCategories();
-
-        if (cancelled) {
-          return;
-        }
-
-        if (Array.isArray(data)) {
-          setCategories(data);
-        } else {
-          setCategories(data?.categories || []);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err?.response?.data?.message ||
-              "Failed to load categories."
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
     loadCategories();
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   const handleSubmit = async (event) => {
@@ -71,19 +59,12 @@ function Categories() {
 
       await createCategory({
         name: trimmedName,
-        type,
       });
 
       setName("");
       setSuccess("Category created successfully.");
 
-      const data = await getCategories();
-
-      if (Array.isArray(data)) {
-        setCategories(data);
-      } else {
-        setCategories(data?.categories || []);
-      }
+      await loadCategories();
     } catch (err) {
       setError(
         err?.response?.data?.message ||
@@ -91,6 +72,35 @@ function Categories() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id, categoryName) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${categoryName}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+      setError("");
+      setSuccess("");
+
+      await deleteCategory(id);
+
+      setSuccess("Category deleted successfully.");
+
+      await loadCategories();
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          "Failed to delete category."
+      );
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -122,6 +132,7 @@ function Categories() {
           </div>
         )}
 
+        {/* ADD CATEGORY */}
         <section className="panel">
           <h2>Add Category</h2>
 
@@ -129,7 +140,7 @@ function Categories() {
             className="form-grid"
             onSubmit={handleSubmit}
           >
-            <label>
+            <label className="full-width">
               Category Name
 
               <input
@@ -139,28 +150,9 @@ function Categories() {
                   setName(event.target.value)
                 }
                 placeholder="e.g. Food"
-                maxLength="100"
+                maxLength="50"
                 required
               />
-            </label>
-
-            <label>
-              Type
-
-              <select
-                value={type}
-                onChange={(event) =>
-                  setType(event.target.value)
-                }
-              >
-                <option value="expense">
-                  Expense
-                </option>
-
-                <option value="income">
-                  Income
-                </option>
-              </select>
             </label>
 
             <div className="form-actions full-width">
@@ -169,14 +161,13 @@ function Categories() {
                 type="submit"
                 disabled={saving}
               >
-                {saving
-                  ? "Saving..."
-                  : "Add Category"}
+                {saving ? "Saving..." : "Add Category"}
               </button>
             </div>
           </form>
         </section>
 
+        {/* CATEGORY LIST */}
         <section className="panel">
           <div className="section-heading">
             <h2>Your Categories</h2>
@@ -200,7 +191,7 @@ function Categories() {
                 <thead>
                   <tr>
                     <th>Name</th>
-                    <th>Type</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
 
@@ -210,11 +201,23 @@ function Categories() {
                       <td>{category.name}</td>
 
                       <td>
-                        <span
-                          className={`type-badge ${category.type}`}
+                        <button
+                          type="button"
+                          className="small-btn danger"
+                          onClick={() =>
+                            handleDelete(
+                              category._id,
+                              category.name
+                            )
+                          }
+                          disabled={
+                            deletingId === category._id
+                          }
                         >
-                          {category.type}
-                        </span>
+                          {deletingId === category._id
+                            ? "Deleting..."
+                            : "Delete"}
+                        </button>
                       </td>
                     </tr>
                   ))}

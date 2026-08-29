@@ -23,9 +23,8 @@ const authMiddleware = (req, res, next) => {
 
     // Store logged-in user's ID in request
     req.user = {
-      id: decoded.userId,
+        _id: decoded.userId,
     };
-
     // Continue to the protected route
     next();
   } catch (error) {
