@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/dashboard";
+const API_URL = "https://pbel-project-bhpm.onrender.com/api/dashboard";
 
 const getConfig = () => {
   const token = localStorage.getItem("token");
